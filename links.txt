@@ -1,0 +1,4 @@
+yolo3MotoBikeDataSet : https://www.kaggle.com/datasets/savanagrawal/detect-person-on-motorbike-or-scooter
+Vehicles-OpenImages.v1-416x416.yolov5pytorch: https://public.roboflow.com/object-detection/vehicles-openimages
+motobike: https://www.kaggle.com/datasets/marceladam/motorcycle-image-datasets
+다카르:https://www.kaggle.com/datasets/tanzimmostafa14/dhaka-occluded-objects-dataset

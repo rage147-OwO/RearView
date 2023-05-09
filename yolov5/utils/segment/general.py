@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from utils.general import xywh2xyxy
 
 
 def crop_mask(masks, boxes):
@@ -21,6 +20,24 @@ def crop_mask(masks, boxes):
     c = torch.arange(h, device=masks.device, dtype=x1.dtype)[None, :, None]  # cols shape(h,1,1)
 
     return masks * ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
+
+
+def process_mask_upsample(protos, masks_in, bboxes, shape):
+    """
+    Crop after upsample.
+    protos: [mask_dim, mask_h, mask_w]
+    masks_in: [n, mask_dim], n is number of masks after nms
+    bboxes: [n, 4], n is number of masks after nms
+    shape: input_image_size, (h, w)
+
+    return: h, w, n
+    """
+
+    c, mh, mw = protos.shape  # CHW
+    masks = (masks_in @ protos.float().view(c, -1)).sigmoid().view(-1, mh, mw)
+    masks = F.interpolate(masks[None], shape, mode='bilinear', align_corners=False)[0]  # CHW
+    masks = crop_mask(masks, bboxes)  # CHW
+    return masks.gt_(0.5)
 
 
 def process_mask(protos, masks_in, bboxes, shape, upsample=False):
@@ -48,60 +65,6 @@ def process_mask(protos, masks_in, bboxes, shape, upsample=False):
     if upsample:
         masks = F.interpolate(masks[None], shape, mode='bilinear', align_corners=False)[0]  # CHW
     return masks.gt_(0.5)
-
-
-def process_mask(proto, det, bbox, shape, upsample=True):
-    """Generate binary segmentation mask from YOLOv5 prototype and detection"""
-    h, w = shape
-    c, mh, mw = proto.shape  # CHW
-    box = det[:, :4]
-    det[:, [0, 2]] = box[:, [0, 2]] / mw
-    det[:, [1, 3]] = box[:, [1, 3]] / mh
-
-    # Resize detection to prototype dimensions
-    det[:, [0, 2]] *= w
-    det[:, [1, 3]] *= h
-    det = det.round().long()
-    det[:, 0] = det[:, 0].clamp(0, w - 1)
-    det[:, 1] = det[:, 1].clamp(0, h - 1)
-    det[:, 2] = det[:, 2].clamp(0, w - 1)
-    det[:, 3] = det[:, 3].clamp(0, h - 1)
-
-    # Crop mask from prototype using detection
-    masks = []
-    for i in range(det.shape[0]):
-        x1, y1, x2, y2 = det[i]
-        mask = proto[:, y1:y2 + 1, x1:x2 + 1]
-        if upsample:
-            mask = cv2.resize(mask.permute(1, 2, 0).numpy(), (int(x2 - x1 + 1) * 4, int(y2 - y1 + 1) * 4),
-                              interpolation=cv2.INTER_LINEAR)
-            mask = torch.from_numpy(mask).permute(2, 0, 1)
-        masks.append(mask)
-    return torch.stack(masks)
-
-def process_mask(proto, det, bbox, im_shape, upsample=True):
-    h, w = im_shape
-    box = xywh2xyxy(bbox)
-    box[:, [0, 2]] /= w
-    box[:, [1, 3]] /= h
-
-    # Create pseudo ground truth
-    gt = torch.zeros_like(proto)
-    det[:, [0, 2]] /= w
-    det[:, [1, 3]] /= h
-    det[:, 4] *= -1  # flip, because coco panoptic encode is inverted
-    for i, d in enumerate(det):
-        gt[int(d[4]), :, int(d[1]):int(d[3]), int(d[0]):int(d[2])] = 1
-
-    # Match
-    if upsample:
-        mask = torch.sigmoid(F.interpolate(proto * gt, size=(h, w), mode='bilinear', align_corners=False))
-    else:
-        mask = torch.sigmoid(proto * gt)
-
-    return mask
-
-
 
 
 def process_mask_native(protos, masks_in, bboxes, shape):

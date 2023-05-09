@@ -1,0 +1,6 @@
+path: D:\GitHub\RearView\yolov5\dataset
+train: ../train/images
+val: ../valid/images
+
+nc: 8
+names: ['bicycle', 'bus', 'car', 'cng', 'motorcycle', 'other-vehicle', 'person', 'rickshaw']
