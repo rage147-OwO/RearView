@@ -15,33 +15,33 @@ class DetectionModel {
       String modelPath,
       int inputSize1,
       int inputSize2,
-      String labelPath,
-      ModelType modelType, {
-        int? nc, // nc 파라미터 추가
+      String labelPath, {
+        int? nc, //옵셔널 타입으로 객체감지인지 이미지 분류인지 구분
       }) async {
-    _modelType = modelType;
-    switch (modelType) {
-      case ModelType.objectDetection:
-        _objectDetectionModel = await FlutterPytorch.loadObjectDetectionModel(
-          modelPath,
-          nc ?? 80,
-          inputSize1,
-          inputSize2,
-          labelPath: labelPath,
-        );
-        break;
-      case ModelType.imageClassification:
-        _imageClassificationModel = await FlutterPytorch.loadClassificationModel(
-          modelPath,
-          inputSize1,
-          inputSize2,
-          labelPath: labelPath,
-        );
-        break;
+    if (nc != null) {
+      _modelType = ModelType.objectDetection;
+      _objectDetectionModel =
+      await FlutterPytorch.loadObjectDetectionModel(
+        modelPath,
+        nc,
+        inputSize1,
+        inputSize2,
+        labelPath: labelPath,
+      );
+    } else {
+      _modelType = ModelType.imageClassification;
+      _imageClassificationModel =
+      await FlutterPytorch.loadClassificationModel(
+        modelPath,
+        inputSize1,
+        inputSize2,
+        labelPath: labelPath,
+      );
     }
   }
 
-  Future<List<ResultObjectDetection?>> detectObjects(List<int> imageBytes) async {
+  Future<List<ResultObjectDetection?>> detectObjects(
+      List<int> imageBytes) async {
     if (_modelType != ModelType.objectDetection) {
       throw Exception("This model type is not for object detection.");
     }
@@ -57,7 +57,8 @@ class DetectionModel {
     if (_modelType != ModelType.imageClassification) {
       throw Exception("This model type is not for image classification.");
     }
-    final prediction = await _imageClassificationModel.getImagePrediction(imageBytes);
+    final prediction =
+    await _imageClassificationModel.getImagePrediction(imageBytes);
     return prediction;
   }
 }
