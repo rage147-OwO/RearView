@@ -49,6 +49,7 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
           // ),
 
           //Bottom Sheet
+          //Bottom Sheet
           Align(
             alignment: Alignment.bottomCenter,
             child: DraggableScrollableSheet(
@@ -68,17 +69,16 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
                       children: [
                         Icon(Icons.keyboard_arrow_up,
                             size: 48, color: Colors.orange),
-                        (classification != null)
-                            ? Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    StatsRow(
-                                        'Classification:', '${classification}'),
-                                  ],
-                                ),
-                              )
-                            : Container()
+                        if (results != null)
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                StatsRow('Class:', '${results![0]!.className}'),
+                                StatsRow('Score:', '${results![0]!.score}'),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -114,6 +114,8 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
             "right": element?.rect.right,
             "bottom": element?.rect.bottom,
           },
+          "className": element?.className,
+          "score": element?.score,
         });
       });
     });

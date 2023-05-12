@@ -33,7 +33,7 @@ class _ChooseDemoState extends State<ChooseDemo> {
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),
-                    child: Text(
+                    child: const Text(
                       "Run Model with Camera",
                       style: TextStyle(
                         color: Colors.white,
