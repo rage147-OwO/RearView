@@ -67,17 +67,11 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.keyboard_arrow_up,
-                            size: 48, color: Colors.orange),
+                        Icon(Icons.keyboard_arrow_up, size: 48, color: Colors.orange),
                         if (results != null)
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                StatsRow('Class:', '${results![0]!.className}'),
-                                StatsRow('Score:', '${results![0]!.score}'),
-                              ],
-                            ),
+                            child: ResultsRow(results),
                           ),
                       ],
                     ),
@@ -102,6 +96,10 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
   }
 
   void resultsCallback(List<ResultObjectDetection?> results) {
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       this.results = results;
       results.forEach((element) {
@@ -121,6 +119,7 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
     });
   }
 
+
   void resultsCallbackClassification(String classification) {
     setState(() {
       this.classification = classification;
@@ -130,6 +129,34 @@ class _RunModelByCameraDemoState extends State<RunModelByCameraDemo> {
   static const BOTTOM_SHEET_RADIUS = Radius.circular(24.0);
   static const BORDER_RADIUS_BOTTOM_SHEET = BorderRadius.only(
       topLeft: BOTTOM_SHEET_RADIUS, topRight: BOTTOM_SHEET_RADIUS);
+}
+
+class ResultsRow extends StatelessWidget {
+  final List<ResultObjectDetection?>? results;
+
+  ResultsRow(this.results);
+
+  @override
+  Widget build(BuildContext context) {
+    if (results == null) {
+      return Container();
+    }
+    return Column(
+      children: results!.map((result) {
+        if (result == null) return SizedBox();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Class: ${result.className ?? ''}'),
+              Text('Score: ${result.score ?? ''}'),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
 
 /// Row for one Stats field
